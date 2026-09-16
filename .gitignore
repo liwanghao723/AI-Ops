@@ -1,0 +1,24 @@
+# ===== 敏感配置（含明文密码 / API key，严禁上传）=====
+config/app.yaml
+config/*.bak_*
+
+# ===== 构建产物 / 大文件 =====
+dist/
+build/
+*.bak
+
+# ===== Python 缓存 =====
+__pycache__/
+*.pyc
+*.pyo
+
+# ===== 运行期生成目录 =====
+logs/
+updates/
+nul
+
+# ===== 本地工程元数据 =====
+.workbuddy/
+
+# ===== 非源码预览图 =====
+preview_*.png

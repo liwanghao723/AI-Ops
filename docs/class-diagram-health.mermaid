@@ -1,0 +1,67 @@
+classDiagram
+    class HealthRow {
+        +int vm_id
+        +str title
+        +str ip
+        +str os
+        +str status
+        +float|None vm_cpu
+        +float|None vm_mem
+        +float|None vm_disk
+        +float host_cpu
+        +float host_mem
+        +float host_disk
+    }
+    class VmPerf {
+        +str uuid
+        +float cpuRate
+        +float memRate
+        +float diskMaxUsage
+        +from_raw(dict) VmPerf
+    }
+    class VmBrief {
+        +int id
+        +int hostId
+        +str title
+        +str name
+        +str status
+        +str uuid
+        +int clusterId
+        +int cpu
+        +int memory
+        +str ipAddr
+    }
+    class RsDomainSummary {
+        +str title
+        +str osVersion
+        +str status
+        +int hostId
+        +str ip
+    }
+    class H3CWorkspaceClient {
+        +query_vm_list() list~VmBrief~
+        +get_vm_summary(int) RsDomainSummary
+        +list_vm_monitors_all() list~VmPerf~
+    }
+    class HealthWorker {
+        +collect()
+        -_merge_rows()
+    }
+    class HealthPanel {
+        +set_rows(list~HealthRow~)
+        +show_explain(str)
+    }
+    class ThresholdCell {
+        +set_value(float|None, int)
+    }
+    class Analyzer {
+        +explain_health(HealthRow, int, int) str
+    }
+    H3CWorkspaceClient ..> VmBrief : returns
+    H3CWorkspaceClient ..> VmPerf : returns
+    HealthWorker --> H3CWorkspaceClient : uses
+    HealthWorker --> HealthRow : builds
+    HealthWorker --> VmPerf : merges by uuid
+    HealthPanel --> HealthRow : displays
+    HealthPanel --> ThresholdCell : renders
+    Analyzer --> HealthRow : reads vm_*

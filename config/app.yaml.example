@@ -1,0 +1,64 @@
+# ============================================================
+# H3C 云桌面智能运维助手 — 配置模板 (app.yaml.example)
+# 首次启动若 config/app.yaml 缺失会自动拷贝本文件为 app.yaml
+# 请填写 platform.user/password 与 llm.api_key 后保存
+# ============================================================
+
+# H3C Workspace 平台连接配置
+platform:
+  base_url: "http://10.1.1.201:8083"   # 默认地址，默认端口 8083
+  user: "<外部接口认证用户-管理员>"       # 管理员账号
+  password: "<password>"                # 账号密码（明文落盘，见 §8.4）
+  verify_ssl: false                      # 自签证书场景一般关掉校验
+  # 平台「前端会话」凭据 = 浏览器登录 H3C 平台网页用的账号密码
+  # （走 /uis/spring_check，与上面的接口账号密码通常不同）
+  # 填写后告警走平台「告警管理页」同款接口 /vdi/warnManage/realTimeAlarms，
+  # 可拿到完整告警（含 License / 终端 / 虚拟应用等多子系统）；
+  # 留空则回退旧接口 /vdi/rest/workspace/realtimeAlarms/list，
+  # 该接口总量会被截断且拿不到 License/终端/虚拟应用告警。
+  frontend_user: "admin"
+  frontend_password: ""
+
+# 大语言模型（OpenAI 兼容接口，可热插拔 DeepSeek/GLM/通义）
+llm:
+  provider: "deepseek"                   # deepseek / glm / qwen
+  base_url: "https://api.deepseek.com/v1"
+  api_key: "<key>"                       # 你的 API Key
+  model: "deepseek-chat"                 # 模型名
+  temperature: 0.3                       # 生成温度
+  timeout: 60                            # 请求超时(秒)
+
+# 检索增强 (RAG)
+rag:
+  top_k: 3                               # 召回条数
+  use_vector: false                      # true 需 sentence-transformers（可选）
+  similarity_threshold: 0.3              # 仅向量模式生效
+  ima_enabled: true                      # 是否启用 IMA 知识库检索（true 时 IMA 优先于本地库）
+  # 以下两项留空则跳过 IMA 检索，直接回退本地知识库
+  # 获取方式：登录 https://ima.qq.com/agent-interface 创建应用后拿到 Client ID / API Key
+  #   注意：API Key 请粘贴真实密钥串，不要填成页面地址或占位说明文字
+  ima_endpoint: ""                       # IMA OpenAPI 基址，留空用默认 https://ima.qq.com
+                                         #   ⚠ 只填到域名即可，不要带 /openapi 后缀
+                                         #     （程序会自动拼 openapi/wiki/v1/...）
+  ima_client_id: ""                      # IMA OpenAPI Client ID
+  ima_api_key: ""                        # IMA OpenAPI API Key（密钥串，非网址）
+
+# 本地知识库目录（相对 ROOT）
+knowledge_dir: "knowledge"
+
+# 健康监控与告警轮询
+health:
+  alarm_refresh_sec: 30                  # 告警自动刷新间隔(10–300s)
+  threshold_cpu: 85                      # CPU 利用率阈值(%)
+  threshold_mem: 85                      # 内存利用率阈值(%)
+  max_concurrency: 5                     # 并发采集线程数
+
+# 版本更新
+update:
+  source: "updates/version.json"         # 本地版本源，或远程 URL
+  remote_url: ""                         # 远程版本库地址（可选）
+  verify_checksum: false                 # 是否校验下载包 checksum
+
+# 界面
+ui:
+  theme: "dark"                          # dark / light

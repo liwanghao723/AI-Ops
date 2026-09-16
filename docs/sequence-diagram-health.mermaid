@@ -1,0 +1,30 @@
+sequenceDiagram
+    participant U as 用户
+    participant P as HealthPanel(UI线程)
+    participant W as HealthWorker(工作线程)
+    participant C as H3CWorkspaceClient
+    participant API as Workspace REST
+
+    U->>P: 点击「一键刷新」
+    P->>W: request_collect (QueuedConnection)
+    W->>C: query_vm_list()
+    C->>API: GET /vms/queryVmList (2.27.40)
+    API-->>C: list[VmBrief] (全量桌面, 含关机)
+    par 并发拉取概要(N 台)
+        W->>C: get_vm_summary(vm.id) ×N
+        C->>API: GET /virtual/domain/{id}/summary (2.9.11)
+        API-->>C: RsDomainSummary (IP/OS/status)
+    end
+    W->>C: list_vm_monitors_all()
+    C->>API: GET /vms/monitors/all (2.27.31, 分页)
+    API-->>C: list[VmPerf] (仅开机桌面, 按uuid)
+    W->>W: 按 uuid 构建 perf_by_uuid
+    W->>W: 逐VM合并 → HealthRow(vm_*, 关机=None, host_*=0)
+    W-->>P: health_ready(rows)
+    P->>P: set_rows → 渲染表格(ThresholdCell, "-"表关机)
+    Note over U,P: 选中行 → 「AI 解读」
+    U->>P: 点击「AI 解读」
+    P->>Analyzer: explain_health(row)
+    Analyzer->>Analyzer: 阈值解读(vm_*, None跳过)
+    Analyzer-->>P: 解读文本
+    P->>P: show_analysis_dialog
