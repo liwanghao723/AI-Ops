@@ -1,5 +1,7 @@
 # H3C 云桌面智能运维助手（H3COpsAssistant）
 
+![CI](https://github.com/liwanghao723/AI-Ops/actions/workflows/ci.yml/badge.svg)
+
 > 一款运行在 Windows 桌面端的**本地化 H3C Workspace 云桌面运维工具**：通过 H3C 官方 REST API 实时拉取告警与桌面/主机性能数据，并由大模型（OpenAI 兼容接口，可热插拔 DeepSeek / GLM / 通义千问）提供告警解释、故障排查建议与智能问答。
 
 - **版本**：v1.0.0

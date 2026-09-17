@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# 精简依赖说明：
+#   numpy / sentence-transformers(openai+torch) / openai 均为「可选增强」，
+#   且仅在运行时按需懒加载（开启向量检索时）。测试与构建都碰不到，
+#   故 CI 不安装它们，避免拉取数百 MB 的 torch 拖慢流水线。
+
+jobs:
+  # 单元测试：在 Linux 上用 Qt offscreen 后端跑 pytest（无需显示/真机/凭据）
+  test:
+    name: Unit tests (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install "PyQt5>=5.15" "requests>=2.31" "PyYAML>=6.0" "pycryptodome>=3.20" "pytest>=8.0"
+
+      - name: Run test suite (offscreen)
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python -m pytest -q
+
+  # 打包构建：在 Windows 上用 PyInstaller 产出单文件 exe，作为构件上传
+  build:
+    name: Build Windows exe
+    runs-on: windows-latest
+    needs: test   # 测试通过后再构建
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install "PyQt5>=5.15" "requests>=2.31" "PyYAML>=6.0" "pycryptodome>=3.20" "pyinstaller>=6.0"
+
+      - name: Build with PyInstaller
+        run: pyinstaller build.spec --noconfirm
+
+      - name: Upload exe artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: H3COpsAssistant-exe
+          path: dist/H3COpsAssistant.exe
+          if-no-files-found: error
